@@ -2,7 +2,7 @@
   "name": "Monthly Timesheet Tracker",
   "short_name": "Timesheet",
   "description": "Track your work hours and calculate your monthly salary",
-  "start_url": "/",
+  "start_url": "/time-sheet/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1976d2",
