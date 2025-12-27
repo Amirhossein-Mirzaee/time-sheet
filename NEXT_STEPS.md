@@ -1,5 +1,12 @@
 # Next Steps - Deployment Checklist ✅
 
+## ⚠️ Important Note
+
+**GitHub Pages CANNOT host Node.js backends** - it only hosts static files.
+You need a separate service for the backend. See options below.
+
+---
+
 Follow these steps in order:
 
 ## Step 1: Update Configuration

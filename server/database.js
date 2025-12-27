@@ -50,5 +50,8 @@ export const writeDB = (data) => {
 };
 
 // Initialize on import
-initDatabase();
-console.log('✅ Database ready');
+try {
+  initDatabase();
+} catch (error) {
+  console.error('❌ Database initialization error:', error);
+}
