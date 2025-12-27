@@ -5,18 +5,21 @@ import { getDaysInPersianMonth, getEnglishDayName, getCurrentPersianDate, getFin
  * This uses local calculation but can be extended to use external APIs
  * @param {number} year - Persian year
  * @param {number} month - Persian month (1-12)
+ * @param {object} config - Configuration object with thursdayIsWeekend property
  * @returns {Promise<object>} Month data with days information
  */
-export const fetchMonthData = async (year, month) => {
+export const fetchMonthData = async (year, month, config = {}) => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 100));
 
   const daysInMonth = getDaysInPersianMonth(year, month);
   const days = [];
+  const thursdayIsWeekend = config.thursdayIsWeekend ?? true; // Default to true for backward compatibility
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dayName = getEnglishDayName(year, month, day);
-    const isWeekend = dayName === 'Friday' || dayName === 'Thursday';
+    // Determine weekend: always Friday, and Thursday if configured
+    const isWeekend = dayName === 'Friday' || (thursdayIsWeekend && dayName === 'Thursday');
 
     days.push({
       day,

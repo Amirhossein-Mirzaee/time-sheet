@@ -26,7 +26,15 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
 
   return (
     <Card elevation={0}>
-      <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+      <CardContent
+        sx={{
+          px: 3,
+          py: { xs: 2.5, sm: 3 },
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+        }}
+      >
         <Typography
           variant="h6"
           component="h2"
@@ -40,24 +48,37 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
           Summary
         </Typography>
 
-        <Grid container spacing={2.5} sx={{ mb: 3, justifyContent: "center" }}>
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            mb: 3,
+            justifyContent: "center",
+            width: "100%",
+            maxWidth: "100%",
+          }}
+        >
           {/* Hours Summary */}
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderRadius: 2,
-                border: 1,
-                borderColor: "divider",
+          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            <div
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                backgroundColor: "background.paper",
+                boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.1)",
+                borderRadius: "10px",
+                paddingRight: "24px",
+                paddingLeft: "24px",
+                paddingTop: "16px",
+                paddingBottom: "16px",
               }}
             >
               <Typography
-                variant="overline"
+                variant="h6"
                 sx={{
-                  fontSize: "0.75rem",
+                  fontSize: "1.2rem",
                   fontWeight: 600,
-                  color: "text.secondary",
+                  color: "text.primary",
                   letterSpacing: "0.08em",
                   display: "block",
                   mb: 2,
@@ -72,9 +93,10 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="overline" color="text.secondary">
                     Total
                   </Typography>
                   <Typography variant="h6" fontWeight={600}>
@@ -87,9 +109,10 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="overline" color="text.secondary">
                     Required
                   </Typography>
                   <Typography variant="body2" fontWeight={500}>
@@ -101,12 +124,17 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="overline" color="text.secondary">
                     Paid Leave Used
                   </Typography>
-                  <Typography variant="body2" color="primary" fontWeight={500}>
+                  <Typography
+                    variant="overline"
+                    color="primary"
+                    fontWeight={500}
+                  >
                     {salaryData.paidLeaveUsed.toFixed(2)}h
                   </Typography>
                 </Box>
@@ -115,10 +143,11 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
-                    Paid Leave Left
+                  <Typography variant="overline" color="text.secondary">
+                    Total Paid Leave
                   </Typography>
                   <Typography
                     variant="body2"
@@ -136,17 +165,18 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        gap: 5,
                       }}
                     >
                       <Typography
-                        variant="body2"
+                        variant="overline"
                         color="warning.main"
                         fontWeight={500}
                       >
                         Remaining
                       </Typography>
                       <Typography
-                        variant="body2"
+                        variant="overline"
                         color="warning.main"
                         fontWeight={600}
                       >
@@ -163,17 +193,18 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        gap: 5,
                       }}
                     >
                       <Typography
-                        variant="body2"
+                        variant="overline"
                         color="success.main"
                         fontWeight={500}
                       >
                         Overtime
                       </Typography>
                       <Typography
-                        variant="body2"
+                        variant="overline"
                         color="success.main"
                         fontWeight={600}
                       >
@@ -183,26 +214,30 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                   </>
                 )}
               </Stack>
-            </Box>
-          </Grid>
+            </div>
+          </div>
 
           {/* Salary Summary */}
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderRadius: 2,
-                border: 1,
-                borderColor: "divider",
+          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            <div
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                backgroundColor: "background.paper",
+                boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.1)",
+                borderRadius: "10px",
+                paddingRight: "24px",
+                paddingLeft: "24px",
+                  paddingTop: "16px",
+                paddingBottom: "16px",
               }}
             >
               <Typography
-                variant="overline"
+                variant="h6"
                 sx={{
-                  fontSize: "0.75rem",
+                  fontSize: "1.2rem",
                   fontWeight: 600,
-                  color: "text.secondary",
+                  color: "text.primary",
                   letterSpacing: "0.08em",
                   display: "block",
                   mb: 2,
@@ -217,12 +252,13 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="overline" color="text.secondary">
                     Hourly Rate
                   </Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="overline" fontWeight={500}>
                     {formatCurrency(salaryData.hourlyRate)} T
                   </Typography>
                 </Box>
@@ -231,12 +267,13 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="overline" color="text.secondary">
                     Regular Pay
                   </Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="overline" fontWeight={500}>
                     {formatCurrency(salaryData.regularPay)} T
                   </Typography>
                 </Box>
@@ -246,15 +283,16 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      gap: 5,
                     }}
                   >
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="overline" color="text.secondary">
                       Overtime Pay
                     </Typography>
                     <Typography
                       variant="body2"
                       color="success.main"
-                      fontWeight={500}
+                      fontWeight={600}
                     >
                       {formatCurrency(salaryData.overtimePay)} T
                     </Typography>
@@ -266,12 +304,13 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 5,
                   }}
                 >
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Total Pay
+                  <Typography variant="overline" fontWeight={600}>
+                    Total
                   </Typography>
-                  <Typography variant="h6" color="primary" fontWeight={700}>
+                  <Typography variant="body1" color="primary" fontWeight={700}>
                     {formatCurrency(salaryData.totalPay)} T
                   </Typography>
                 </Box>
@@ -283,8 +322,8 @@ const Summary = ({ totalHours, paidLeaveUsed = 0, config }) => {
                   Base: {formatCurrency(config.monthlySalary)} T
                 </Typography>
               </Stack>
-            </Box>
-          </Grid>
+            </div>
+          </div>
         </Grid>
 
         {/* Progress Bar */}

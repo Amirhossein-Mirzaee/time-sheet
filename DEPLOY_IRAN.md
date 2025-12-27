@@ -1,125 +1,148 @@
-# راهنمای استقرار برای ایران 🇮🇷
+# Deployment Guide for Iran 🇮🇷
 
-از آنجایی که Vercel در ایران فیلتر است، از **GitHub Pages** استفاده می‌کنیم که رایگان و در دسترس است.
+This guide provides Iran-friendly deployment options that work without VPN.
 
-## روش 1: استقرار خودکار با GitHub Actions (پیشنهاد شده)
+## ✅ Recommended Setup (Works in Iran)
 
-### مرحله 1: فعال‌سازی GitHub Pages
+### Frontend: GitHub Pages
+### Backend: Railway.app
 
-1. به مخزن GitHub خود بروید: `https://github.com/Amirhossein-Mirzaee/time-sheet`
-2. روی **Settings** کلیک کنید
-3. در منوی سمت چپ، **Pages** را انتخاب کنید
-4. در بخش **Source**:
-   - **Branch** را انتخاب کنید
-   - Branch را `gh-pages` انتخاب کنید
-   - Folder را `/ (root)` انتخاب کنید
-5. روی **Save** کلیک کنید
-
-### مرحله 2: Push کردن تغییرات
-
-```bash
-git add .
-git commit -m "Setup GitHub Pages deployment"
-git push origin main
-```
-
-### مرحله 3: منتظر بمانید
-
-- GitHub Actions به صورت خودکار پروژه را build و deploy می‌کند
-- بعد از 2-3 دقیقه، به آدرس زیر بروید:
-  ```
-  https://amirhossein-mirzaee.github.io/time-sheet/
-  ```
+Both services work without restrictions in Iran!
 
 ---
 
-## روش 2: استقرار دستی (سریع‌تر)
+## Step 1: Deploy Backend (Railway.app)
 
-اگر می‌خواهید فوراً deploy کنید:
+1. **Go to [Railway.app](https://railway.app)**
+   - Sign up with GitHub
+   - Railway works in Iran ✅
 
-```bash
-npm run deploy
-```
+2. **Create New Project**
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose your repository
 
-این دستور:
-1. پروژه را build می‌کند
-2. فایل‌ها را به branch `gh-pages` push می‌کند
-3. بعد از 1-2 دقیقه، سایت شما در دسترس است
+3. **Configure Service**
+   - Click on the deployed service
+   - Go to Settings → General:
+     - **Root Directory**: `server`
+     - **Start Command**: `npm start`
 
-**نکته**: قبل از اجرا، باید GitHub Pages را در Settings فعال کنید (مرحله 1 روش 1)
+4. **Add Environment Variables**
+   - Go to Variables tab
+   - Add:
+     - `JWT_SECRET`: (any random string, e.g., `my-secret-key-12345`)
+
+5. **Get Your Backend URL**
+   - Railway will provide a URL like: `https://your-app.up.railway.app`
+   - Copy this URL!
 
 ---
 
-## روش 3: استفاده از Netlify (اگر در دسترس باشد)
+## Step 2: Deploy Frontend (GitHub Pages)
 
-1. به https://netlify.com بروید
-2. Sign up کنید (رایگان)
-3. روی **Add new site** → **Import an existing project** کلیک کنید
-4. GitHub repository خود را انتخاب کنید
-5. تنظیمات:
+### Option A: Automatic Deployment (GitHub Actions)
+
+1. **Add GitHub Secret:**
+   ```
+   Repository → Settings → Secrets and variables → Actions
+   → New repository secret
+   ```
+   - Name: `VITE_API_URL`
+   - Value: `https://your-backend-url.up.railway.app/api`
+   - (Replace with your Railway URL from Step 1)
+
+2. **Update vite.config.js:**
+   ```js
+   base: '/your-repo-name/', // Change to your GitHub repo name
+   ```
+   Or use `/` if deploying to custom domain.
+
+3. **Enable GitHub Pages:**
+   ```
+   Repository → Settings → Pages
+   → Source: GitHub Actions
+   ```
+
+4. **Push to main branch:**
+   - GitHub Actions will automatically deploy
+   - Your site: `https://yourusername.github.io/your-repo-name/`
+
+### Option B: Manual Deployment
+
+1. **Build locally:**
+   ```powershell
+   npm run build
+   ```
+
+2. **Deploy to gh-pages:**
+   ```powershell
+   npm run deploy
+   ```
+
+3. **Enable Pages:**
+   - Go to Settings → Pages
+   - Source: `gh-pages` branch
+   - Folder: `/ (root)`
+
+---
+
+## Step 3: Alternative Frontend Options
+
+### Cloudflare Pages (Works in Iran ✅)
+
+1. **Go to [Cloudflare Pages](https://pages.cloudflare.com)**
+2. **Sign up** (free account)
+3. **Create project** → Connect to Git
+4. **Configure:**
+   - Framework: **Vite**
    - Build command: `npm run build`
-   - Publish directory: `dist`
-6. روی **Deploy** کلیک کنید
+   - Build output: `dist`
+5. **Environment Variables:**
+   - `VITE_API_URL`: `https://your-backend-url.up.railway.app/api`
 
 ---
 
-## روش 4: استفاده از Cloudflare Pages (معمولاً در دسترس است)
+## Summary
 
-1. به https://pages.cloudflare.com بروید
-2. Sign up کنید (رایگان)
-3. **Create a project** → **Connect to Git**
-4. GitHub repository خود را انتخاب کنید
-5. تنظیمات:
-   - Framework preset: Vite
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-6. روی **Save and Deploy** کلیک کنید
+✅ **Frontend**: GitHub Pages (Free, Works in Iran)
+✅ **Backend**: Railway.app (Free tier, Works in Iran)
+✅ **Database**: JSON file (stored on Railway, persistent)
+✅ **Total Cost**: $0/month
 
 ---
 
-## نصب روی موبایل 📱
+## Your URLs
 
-بعد از استقرار:
-
-1. **Android**:
-   - لینک سایت را در Chrome باز کنید
-   - منو (3 نقطه) → **Add to Home Screen**
-   - اپلیکیشن روی صفحه اصلی شما اضافه می‌شود
-
-2. **iPhone**:
-   - لینک سایت را در Safari باز کنید
-   - دکمه Share → **Add to Home Screen**
-   - اپلیکیشن روی صفحه اصلی شما اضافه می‌شود
+After deployment:
+- **Frontend**: `https://yourusername.github.io/your-repo-name/`
+- **Backend**: `https://your-app.up.railway.app`
+- **Health Check**: `https://your-app.up.railway.app/api/health`
 
 ---
 
-## تغییر Base URL
+## Troubleshooting
 
-اگر نام repository را تغییر دادید، باید این فایل‌ها را به‌روز کنید:
+### Frontend can't connect to backend?
+- Check `VITE_API_URL` is set correctly in GitHub Secrets
+- Verify Railway backend is running
+- Check CORS settings in `server/server.js`
 
-1. `vite.config.js` - خط `base: '/time-sheet/'`
-2. `public/manifest.json` - خط `start_url`
+### GitHub Pages shows 404?
+- Make sure `base` in `vite.config.js` matches your repo name
+- Check GitHub Pages is enabled in Settings
+- Wait 1-2 minutes for deployment to complete
 
----
-
-## مشکلات احتمالی
-
-### اگر سایت نمایش داده نمی‌شود:
-- 2-3 دقیقه صبر کنید (GitHub Pages نیاز به زمان دارد)
-- Cache مرورگر را پاک کنید
-- مطمئن شوید GitHub Pages در Settings فعال است
-
-### اگر PWA نصب نمی‌شود:
-- مطمئن شوید از HTTPS استفاده می‌کنید (GitHub Pages خودکار HTTPS دارد)
-- Manifest.json و service worker باید قابل دسترسی باشند
+### Backend not responding?
+- Check Railway logs
+- Verify environment variables are set
+- Ensure database file has write permissions
 
 ---
 
-## لینک‌های مفید
+## Advantages
 
-- GitHub Repository: https://github.com/Amirhossein-Mirzaee/time-sheet
-- GitHub Pages: https://amirhossein-mirzaee.github.io/time-sheet/
-
-**موفق باشید! 🚀**
-
-
+✅ **No VPN needed** - Both GitHub and Railway work in Iran
+✅ **Free** - All services have free tiers
+✅ **Auto-deploy** - Deploys automatically on git push
+✅ **Persistent data** - Railway stores your JSON database permanently

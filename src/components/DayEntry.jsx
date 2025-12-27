@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
-  TextField,
   Typography,
   Box,
   Button,
@@ -10,8 +9,29 @@ import {
   Stack,
   Grid,
 } from "@mui/material";
-import { calculateWorkHours, isValidTimeFormat } from "../utils/timeUtils";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import { calculateWorkHours } from "../utils/timeUtils";
 import { vibrateTap } from "../utils/vibration";
+
+// Helper function to convert time string (HH:MM) to dayjs object
+const stringToDayjs = (timeStr) => {
+  if (!timeStr || !timeStr.trim()) return null;
+  const parts = timeStr.trim().split(":");
+  if (parts.length !== 2) return null;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return null;
+  return dayjs().hour(hours).minute(minutes).second(0).millisecond(0);
+};
+
+// Helper function to convert dayjs object to time string (HH:MM)
+const dayjsToString = (dayjsObj) => {
+  if (!dayjsObj || !dayjsObj.isValid()) return "";
+  return dayjsObj.format("H:mm");
+};
 
 const DayEntry = ({
   day,
@@ -20,30 +40,50 @@ const DayEntry = ({
   checkOut,
   notGoing,
   holiday,
+  isWeekend: propIsWeekend,
+  month,
+  year,
   onUpdate,
   onStatusChange,
 }) => {
-  const [localCheckIn, setLocalCheckIn] = useState(checkIn || "");
-  const [localCheckOut, setLocalCheckOut] = useState(checkOut || "");
+  const [localCheckIn, setLocalCheckIn] = useState(() =>
+    stringToDayjs(checkIn || "")
+  );
+  const [localCheckOut, setLocalCheckOut] = useState(() =>
+    stringToDayjs(checkOut || "")
+  );
   const [checkInError, setCheckInError] = useState("");
   const [checkOutError, setCheckOutError] = useState("");
 
+  // Sync local state with props when they change externally
   useEffect(() => {
-    setLocalCheckIn(checkIn || "");
-    setLocalCheckOut(checkOut || "");
+    const newCheckIn = stringToDayjs(checkIn || "");
+    const newCheckOut = stringToDayjs(checkOut || "");
+
+    // Only update state if the parsed values are different
+    const currentCheckInStr = localCheckIn ? dayjsToString(localCheckIn) : "";
+    const currentCheckOutStr = localCheckOut
+      ? dayjsToString(localCheckOut)
+      : "";
+
+    if (currentCheckInStr !== (checkIn || "")) {
+      setLocalCheckIn(newCheckIn);
+    }
+    if (currentCheckOutStr !== (checkOut || "")) {
+      setLocalCheckOut(newCheckOut);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkIn, checkOut]);
 
   const handleCheckInChange = (value) => {
     setLocalCheckIn(value);
     setCheckInError("");
 
-    if (value && !isValidTimeFormat(value)) {
-      setCheckInError("Invalid time format (use H:MM or HH:MM)");
-      return;
-    }
+    const checkInStr = dayjsToString(value);
+    const checkOutStr = dayjsToString(localCheckOut);
 
-    if (value && localCheckOut) {
-      const hours = calculateWorkHours(value, localCheckOut);
+    if (value && localCheckOut && value.isValid() && localCheckOut.isValid()) {
+      const hours = calculateWorkHours(checkInStr, checkOutStr);
       if (hours <= 0) {
         setCheckOutError("Check-out must be after check-in");
       } else {
@@ -51,20 +91,18 @@ const DayEntry = ({
       }
     }
 
-    onUpdate(day, value, localCheckOut);
+    onUpdate(day, checkInStr, checkOutStr);
   };
 
   const handleCheckOutChange = (value) => {
     setLocalCheckOut(value);
     setCheckOutError("");
 
-    if (value && !isValidTimeFormat(value)) {
-      setCheckOutError("Invalid time format (use H:MM or HH:MM)");
-      return;
-    }
+    const checkInStr = dayjsToString(localCheckIn);
+    const checkOutStr = dayjsToString(value);
 
-    if (value && localCheckIn) {
-      const hours = calculateWorkHours(localCheckIn, value);
+    if (value && localCheckIn && value.isValid() && localCheckIn.isValid()) {
+      const hours = calculateWorkHours(checkInStr, checkOutStr);
       if (hours <= 0) {
         setCheckOutError("Check-out must be after check-in");
       } else {
@@ -72,7 +110,7 @@ const DayEntry = ({
       }
     }
 
-    onUpdate(day, localCheckIn, value);
+    onUpdate(day, checkInStr, checkOutStr);
   };
 
   const handleNotGoingToggle = () => {
@@ -91,8 +129,11 @@ const DayEntry = ({
     }
   };
 
-  const workHours = calculateWorkHours(localCheckIn, localCheckOut);
-  const isWeekend = dayName === "Friday" || dayName === "Thursday";
+  const workHours = calculateWorkHours(
+    dayjsToString(localCheckIn),
+    dayjsToString(localCheckOut)
+  );
+  const isWeekend = propIsWeekend || false;
   const isNotGoing = notGoing || false;
   const isHoliday = holiday || false;
 
@@ -164,7 +205,7 @@ const DayEntry = ({
                   mb: 0.5,
                 }}
               >
-                Day {day}
+                {month && year ? `${month}/${day}` : `Day ${day}`}
               </Typography>
               {dayName && (
                 <Typography
@@ -246,6 +287,7 @@ const DayEntry = ({
               size="small"
               fullWidth
               onClick={handleNotGoingToggle}
+              disabled={isWeekend}
               sx={{
                 minHeight: { xs: 36, sm: 32 },
                 fontSize: "0.75rem",
@@ -260,6 +302,7 @@ const DayEntry = ({
               size="small"
               fullWidth
               onClick={handleHolidayToggle}
+              disabled={isWeekend}
               sx={{
                 minHeight: { xs: 36, sm: 32 },
                 fontSize: "0.75rem",
@@ -271,44 +314,57 @@ const DayEntry = ({
           </Stack>
 
           {/* Time Inputs */}
-          <Grid container spacing={1.5} sx={{ alignItems: "flex-start" }}>
-            <Grid item xs={6}>
-              <TextField
-                label="Check-in"
-                value={localCheckIn}
-                onChange={(e) => handleCheckInChange(e.target.value)}
-                placeholder="7:50"
-                disabled={isNotGoing || isHoliday}
-                fullWidth
-                size="small"
-                error={!!checkInError}
-                helperText={checkInError}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-              />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Grid
+              container
+              spacing={1.5}
+              sx={{ alignItems: "flex-start", flexWrap: "wrap" }}
+            >
+              <Grid sx={{ width: "100%" }} item xs={6} sm={12}>
+                <TimePicker
+                  label="Check-in"
+                  value={localCheckIn}
+                  onChange={handleCheckInChange}
+                  disabled={isWeekend || isNotGoing || isHoliday}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                      error: !!checkInError,
+                      helperText: checkInError,
+                      sx: {
+                        "& .MuiOutlinedInput-root": {
+                          fontSize: "0.875rem",
+                        },
+                        width: "100%",
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid sx={{ width: "100%" }} item xs={6}>
+                <TimePicker
+                  label="Check-out"
+                  value={localCheckOut}
+                  onChange={handleCheckOutChange}
+                  disabled={isWeekend || isNotGoing || isHoliday}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                      error: !!checkOutError,
+                      helperText: checkOutError,
+                      sx: {
+                        "& .MuiOutlinedInput-root": {
+                          fontSize: "0.875rem",
+                        },
+                      },
+                    },
+                  }}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Check-out"
-                value={localCheckOut}
-                onChange={(e) => handleCheckOutChange(e.target.value)}
-                placeholder="16:30"
-                disabled={isNotGoing || isHoliday}
-                fullWidth
-                size="small"
-                error={!!checkOutError}
-                helperText={checkOutError}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
+          </LocalizationProvider>
         </Stack>
       </CardContent>
     </Card>

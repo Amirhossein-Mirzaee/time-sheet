@@ -1,143 +1,196 @@
-# Deployment Guide - Timesheet Tracker PWA
+# Deployment Guide
 
-## Option 1: Deploy to Vercel (Recommended - Easiest)
+This guide will help you deploy both the frontend and backend of the Timesheet Tracker app.
 
-### Method A: Using Vercel Website (No CLI needed)
+## Deployment Options
 
-1. **Create a GitHub account** (if you don't have one):
-   - Go to https://github.com
-   - Sign up for free
+### Option 1: Free Deployment (Recommended)
 
-2. **Push your code to GitHub**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin YOUR_GITHUB_REPO_URL
-   git push -u origin main
-   ```
+#### Frontend → GitHub Pages (Free) - Works in Iran ✅
+#### Backend → Railway.app (Free) or Render.com (Free)
 
-3. **Deploy to Vercel**:
-   - Go to https://vercel.com
-   - Sign up with your GitHub account (free)
-   - Click "New Project"
-   - Import your GitHub repository
-   - Vercel will auto-detect Vite settings
-   - Click "Deploy"
-   - Wait 1-2 minutes
-   - Your app will be live at: `https://your-project-name.vercel.app`
-
-4. **Install on your phone**:
-   - Open the deployed URL on your phone's browser
-   - The PWA will prompt you to "Add to Home Screen"
-   - Or go to browser menu → "Add to Home Screen"
-
-### Method B: Using Vercel CLI
-
-1. **Install Vercel CLI**:
-   ```bash
-   npm install -g vercel
-   ```
-
-2. **Login to Vercel**:
-   ```bash
-   vercel login
-   ```
-
-3. **Deploy**:
-   ```bash
-   vercel
-   ```
-   - Follow the prompts
-   - Your app will be deployed instantly!
+### Option 2: Alternative Frontend Hosting
+- **Netlify** (Free) - Alternative to Vercel
+- **Cloudflare Pages** (Free) - Works in Iran ✅
+- **GitHub Pages** (Free) - Works in Iran ✅
 
 ---
 
-## Option 2: Deploy to Netlify (Alternative)
+## Step 1: Deploy Backend (Railway.app - Recommended)
 
-1. **Build your project** (already done):
-   ```bash
-   npm run build
-   ```
+### Why Railway?
+- ✅ Free tier available
+- ✅ Persistent storage (your JSON database will work!)
+- ✅ Easy deployment from GitHub
+- ✅ Automatic HTTPS
 
-2. **Go to Netlify**:
-   - Visit https://netlify.com
-   - Sign up for free
+### Setup:
 
-3. **Deploy**:
-   - Drag and drop the `dist` folder to Netlify
-   - Or connect your GitHub repo
-   - Your app will be live!
-
----
-
-## Option 3: Deploy to GitHub Pages
-
-1. **Install gh-pages**:
-   ```bash
-   npm install --save-dev gh-pages
-   ```
-
-2. **Add to package.json**:
-   ```json
-   "scripts": {
-     "deploy": "npm run build && gh-pages -d dist"
-   }
-   ```
-
-3. **Deploy**:
-   ```bash
-   npm run deploy
-   ```
+1. **Go to [Railway.app](https://railway.app)**
+2. **Sign up with GitHub**
+3. **Create New Project**
+4. **Deploy from GitHub repo**
+   - Select your repository
+   - Railway will auto-detect it's a Node.js app
+5. **Configure the service:**
+   - Root Directory: `server`
+   - Start Command: `npm start`
+   - Build Command: (leave empty or `npm install`)
+6. **Add Environment Variables:**
+   - `JWT_SECRET`: (generate a random string)
+   - `PORT`: (Railway sets this automatically, but you can set `3001` if needed)
+7. **Get your backend URL:**
+   - Railway will give you a URL like: `https://your-app.up.railway.app`
+   - Copy this URL!
 
 ---
 
-## After Deployment
+## Step 2: Deploy Frontend (Vercel - Recommended)
 
-### Install PWA on Your Phone:
+### Why Vercel?
+- ✅ Free tier
+- ✅ Automatic HTTPS
+- ✅ Easy GitHub integration
+- ✅ Fast global CDN
 
-1. **Android**:
-   - Open the app URL in Chrome
-   - Tap the menu (3 dots) → "Add to Home Screen"
-   - The app will appear like a native app
+### Setup:
 
-2. **iPhone**:
-   - Open the app URL in Safari
-   - Tap the Share button → "Add to Home Screen"
-   - The app will appear on your home screen
+1. **Go to [Vercel.com](https://vercel.com)**
+2. **Sign up with GitHub**
+3. **Import your repository**
+4. **Configure:**
+   - Framework Preset: **Vite**
+   - Root Directory: `.` (leave default)
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+5. **Add Environment Variable:**
+   - `VITE_API_URL`: `https://your-backend-url.up.railway.app/api`
+   - (Use the Railway URL from Step 1)
+6. **Deploy!**
 
-### Features Available:
-- ✅ Works offline (after first visit)
-- ✅ Full-screen experience
-- ✅ Fast loading
-- ✅ Data saved in browser (localStorage)
-- ✅ Vibration feedback
-- ✅ Mobile-optimized UI
+---
+
+## Alternative: Deploy to Render.com (Backend)
+
+### Setup Render.com:
+
+1. **Go to [Render.com](https://render.com)**
+2. **Sign up**
+3. **Create New Web Service**
+4. **Connect GitHub repository**
+5. **Configure:**
+   - Name: `timesheet-tracker-api`
+   - Region: Choose closest
+   - Branch: `main`
+   - Root Directory: `server`
+   - Environment: `Node`
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+6. **Add Environment Variables:**
+   - `JWT_SECRET`: (random string)
+7. **Get URL and update frontend's `VITE_API_URL`**
+
+---
+
+## Step 3: Update GitHub Secrets (Optional)
+
+If using GitHub Actions, add secrets:
+
+1. Go to your repo → **Settings** → **Secrets and variables** → **Actions**
+2. Add:
+   - `VITE_API_URL`: Your backend URL (e.g., `https://your-app.railway.app/api`)
+
+---
+
+## Step 4: Update Frontend Environment
+
+Create `.env.production` file:
+
+```env
+VITE_API_URL=https://your-backend-url.up.railway.app/api
+```
+
+This will be used for production builds.
+
+---
+
+## Quick Deploy Script
+
+After setting up Railway and Vercel:
+
+1. **Backend is auto-deployed** on every push to `main`
+2. **Frontend is auto-deployed** on every push to `main`
+3. **Update `VITE_API_URL`** in Vercel environment variables with your Railway backend URL
+
+---
+
+## Database Persistence
+
+### Railway.app
+✅ JSON file database works! Railway provides persistent storage.
+
+### Render.com
+⚠️ Ephemeral filesystem - database will reset on redeploy. Consider using a free database:
+- MongoDB Atlas (free tier)
+- Supabase (free tier)
+- Or use Railway instead
+
+---
+
+## Testing Deployment
+
+1. **Backend Health Check:**
+   ```
+   https://your-backend-url.railway.app/api/health
+   ```
+   Should return: `{"status":"OK","message":"Timesheet Tracker API is running"}`
+
+2. **Frontend:**
+   - Visit your Vercel URL
+   - Try signing up/logging in
+   - Data should persist!
 
 ---
 
 ## Troubleshooting
 
-### If PWA doesn't install:
-- Make sure you're using HTTPS (Vercel/Netlify provide this automatically)
-- Check that manifest.json and service worker are accessible
-- Try clearing browser cache
+### Backend not connecting?
+- Check Railway logs
+- Verify `PORT` environment variable
+- Ensure database file has write permissions
 
-### If data is lost:
-- Data is stored in browser's localStorage
-- Clearing browser data will remove saved entries
-- Consider backing up important data
+### Frontend can't reach backend?
+- Check CORS settings in `server/server.js`
+- Verify `VITE_API_URL` is set correctly
+- Check browser console for errors
+
+### Database resets?
+- Use Railway.app (persistent storage)
+- Or migrate to a cloud database (MongoDB Atlas, Supabase)
 
 ---
 
-## Free Hosting Comparison
+## Free Tier Limits
 
-| Service | Free Tier | HTTPS | Custom Domain | Best For |
-|---------|-----------|-------|---------------|----------|
-| Vercel | ✅ Unlimited | ✅ | ✅ | React/Vite apps |
-| Netlify | ✅ 100GB bandwidth | ✅ | ✅ | Static sites |
-| GitHub Pages | ✅ Unlimited | ✅ | ✅ | Open source |
+### Railway
+- $5 free credit/month (usually enough for small apps)
+- 500 hours of usage
+- Persistent storage ✅
 
-**Recommendation**: Use **Vercel** - it's the easiest and best for React/Vite projects!
+### Vercel
+- Unlimited bandwidth
+- 100GB bandwidth/month
+- Automatic HTTPS
 
+### Render
+- Free tier available
+- Spins down after 15min inactivity
+- Ephemeral storage (database resets)
+
+---
+
+## Cost
+
+**Total: $0/month** ✅
+
+Both Railway and Vercel free tiers are sufficient for this application.

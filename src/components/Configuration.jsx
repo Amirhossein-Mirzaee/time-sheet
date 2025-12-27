@@ -8,6 +8,10 @@ import {
   Typography,
   Stack,
   Paper,
+  FormControlLabel,
+  Switch,
+  FormControl,
+  FormHelperText,
 } from "@mui/material";
 import { formatCurrency } from "../utils/salaryUtils";
 import { vibrateSuccess, vibrateError } from "../utils/vibration";
@@ -21,6 +25,9 @@ const Configuration = ({ onSave, initialConfig }) => {
   );
   const [paidLeaveHours, setPaidLeaveHours] = useState(
     initialConfig?.paidLeaveHours || 20
+  );
+  const [thursdayIsWeekend, setThursdayIsWeekend] = useState(
+    initialConfig?.thursdayIsWeekend ?? true
   );
   const [errors, setErrors] = useState({});
 
@@ -51,6 +58,7 @@ const Configuration = ({ onSave, initialConfig }) => {
         monthlySalary: parseFloat(monthlySalary),
         requiredHours: parseFloat(requiredHours),
         paidLeaveHours: parseFloat(paidLeaveHours),
+        thursdayIsWeekend: thursdayIsWeekend,
       });
     } else {
       vibrateError();
@@ -135,6 +143,24 @@ const Configuration = ({ onSave, initialConfig }) => {
                 inputProps={{ min: 0, step: 0.5 }}
                 placeholder="20"
               />
+
+              <FormControl fullWidth>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={thursdayIsWeekend}
+                      onChange={(e) => setThursdayIsWeekend(e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="Thursday is weekend"
+                />
+                <FormHelperText sx={{ ml: 4, mt: 0.5 }}>
+                  {thursdayIsWeekend
+                    ? "Thursday and Friday are weekends (Iran standard)"
+                    : "Only Friday is weekend"}
+                </FormHelperText>
+              </FormControl>
 
               {monthlySalary && requiredHours && hourlyRate > 0 && (
                 <Paper

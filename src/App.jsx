@@ -14,6 +14,7 @@ import DayEntry from "./components/DayEntry";
 import Summary from "./components/Summary";
 import PaidLeaveInput from "./components/PaidLeaveInput";
 import Configuration from "./components/Configuration";
+import Auth from "./components/Auth";
 import { calculateWorkHours } from "./utils/timeUtils";
 import {
   getCurrentPersianDate,
@@ -25,7 +26,8 @@ import {
   saveConfig,
   saveMonthData,
   loadMonthData,
-} from "./utils/storage";
+  setAuthToken,
+} from "./utils/apiStorage";
 import {
   DEFAULT_MONTHLY_SALARY,
   DEFAULT_REQUIRED_HOURS,
@@ -35,6 +37,7 @@ import { formatCurrency } from "./utils/salaryUtils";
 
 const App = () => {
   const currentDate = getCurrentPersianDate();
+  const [user, setUser] = useState(null);
   const [config, setConfig] = useState(null);
   const [year, setYear] = useState(currentDate.year);
   const [month, setMonth] = useState(currentDate.month);
@@ -44,37 +47,94 @@ const App = () => {
   const [dayStatuses, setDayStatuses] = useState({});
   const [paidLeaveUsed, setPaidLeaveUsed] = useState(0);
 
+  // Check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Verify token is valid by trying to load config
+      loadConfig()
+        .then((config) => {
+          // Token is valid, set a placeholder user object
+          setUser({ id: 'authenticated' });
+          if (config) {
+            setConfig(config);
+          }
+        })
+        .catch(() => {
+          // Token is invalid, clear it
+          setAuthToken(null);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle successful authentication
+  const handleAuthSuccess = (authUser) => {
+    setUser(authUser);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    setConfig(null);
+    setTimeEntries({});
+    setDayStatuses({});
+    setPaidLeaveUsed(0);
+  };
+
   // Save paid leave when it changes
-  const handlePaidLeaveChange = (value) => {
+  const handlePaidLeaveChange = async (value) => {
     setPaidLeaveUsed(value);
-    // Save to localStorage
-    if (monthData && config) {
-      saveMonthData(year, month, {
-        timeEntries,
-        dayStatuses,
-        paidLeaveUsed: value,
-      });
+    // Save to API/MongoDB
+    if (monthData && config && user) {
+      try {
+        await saveMonthData(year, month, {
+          timeEntries,
+          dayStatuses,
+          paidLeaveUsed: value,
+        });
+      } catch (error) {
+        console.error("Error saving paid leave:", error);
+      }
     }
   };
 
-  // Load configuration on mount
+  // Load configuration on mount or when user changes
   useEffect(() => {
-    const savedConfig = loadConfig();
-    if (savedConfig) {
-      setConfig(savedConfig);
-    }
-  }, []);
+    const loadUserConfig = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const savedConfig = await loadConfig();
+          if (savedConfig) {
+            setConfig(savedConfig);
+          }
+        } catch (error) {
+          console.error("Error loading config:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadUserConfig();
+  }, [user]);
 
   // Fetch month data when year or month changes
   useEffect(() => {
     const loadMonthDataAsync = async () => {
+      if (!user) return;
+
       setLoading(true);
       try {
-        const data = await fetchMonthData(year, month);
+        const data = await fetchMonthData(year, month, config || {});
         setMonthData(data);
 
-        // Load saved data from localStorage
-        const savedData = loadMonthData(year, month);
+        // Load saved data from API/MongoDB
+        const savedData = await loadMonthData(year, month);
         if (savedData) {
           // Filter entries and statuses to only include valid days
           const filteredEntries = {};
@@ -103,8 +163,10 @@ const App = () => {
       }
     };
 
-    loadMonthDataAsync();
-  }, [year, month]);
+    if (config && user) {
+      loadMonthDataAsync();
+    }
+  }, [year, month, config, user]);
 
   const handleYearChange = (newYear) => {
     setYear(newYear);
@@ -114,25 +176,27 @@ const App = () => {
     setMonth(newMonth);
   };
 
-  const handleTimeUpdate = (day, checkIn, checkOut) => {
+  const handleTimeUpdate = async (day, checkIn, checkOut) => {
     setTimeEntries((prev) => {
       const updated = {
         ...prev,
         [day]: { checkIn, checkOut },
       };
-      // Save to localStorage
-      if (monthData) {
+      // Save to API/MongoDB
+      if (monthData && user) {
         saveMonthData(year, month, {
           timeEntries: updated,
           dayStatuses,
           paidLeaveUsed,
+        }).catch((error) => {
+          console.error("Error saving time update:", error);
         });
       }
       return updated;
     });
   };
 
-  const handleStatusChange = (day, statusType, value) => {
+  const handleStatusChange = async (day, statusType, value) => {
     setDayStatuses((prev) => {
       const updated = {
         ...prev,
@@ -141,21 +205,29 @@ const App = () => {
           [statusType]: value,
         },
       };
-      // Save to localStorage
-      if (monthData) {
+      // Save to API/MongoDB
+      if (monthData && user) {
         saveMonthData(year, month, {
           timeEntries,
           dayStatuses: updated,
           paidLeaveUsed,
+        }).catch((error) => {
+          console.error("Error saving status change:", error);
         });
       }
       return updated;
     });
   };
 
-  const handleConfigSave = (newConfig) => {
+  const handleConfigSave = async (newConfig) => {
     setConfig(newConfig);
-    saveConfig(newConfig);
+    if (user) {
+      try {
+        await saveConfig(newConfig);
+      } catch (error) {
+        console.error("Error saving config:", error);
+      }
+    }
   };
 
   const totalHours = useMemo(() => {
@@ -184,6 +256,33 @@ const App = () => {
     return total;
   }, [timeEntries, dayStatuses, monthData]);
 
+  // Show auth if not authenticated
+  if (!user && !loading) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  // Show loading while checking auth or loading config
+  if (loading || !user) {
+    return (
+      <Box
+        sx={{
+          minHeight: { xs: "100dvh", sm: "100vh" },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "background.default",
+        }}
+      >
+        <Stack spacing={2} alignItems="center">
+          <CircularProgress size={40} />
+          <Typography variant="body2" color="text.secondary">
+            Loading...
+          </Typography>
+        </Stack>
+      </Box>
+    );
+  }
+
   // Show configuration if not set
   if (!config) {
     return (
@@ -193,6 +292,7 @@ const App = () => {
           monthlySalary: DEFAULT_MONTHLY_SALARY,
           requiredHours: DEFAULT_REQUIRED_HOURS,
           paidLeaveHours: DEFAULT_PAID_LEAVE_HOURS,
+          thursdayIsWeekend: true,
         }}
       />
     );
@@ -357,6 +457,9 @@ const App = () => {
                     checkOut={timeEntries[dayInfo.day]?.checkOut || ""}
                     notGoing={dayStatuses[dayInfo.day]?.notGoing || false}
                     holiday={dayStatuses[dayInfo.day]?.holiday || false}
+                    isWeekend={dayInfo.isWeekend || false}
+                    month={monthData.month}
+                    year={monthData.year}
                     onUpdate={handleTimeUpdate}
                     onStatusChange={handleStatusChange}
                   />
@@ -384,18 +487,29 @@ const App = () => {
             Base: {formatCurrency(config.monthlySalary)} T • Required:{" "}
             {config.requiredHours}h • Leave: {config.paidLeaveHours}h
           </Typography>
-          <Button
-            onClick={() => {
-              if (window.confirm("Do you want to change the settings?")) {
-                setConfig(null);
-              }
-            }}
-            size="small"
-            variant="text"
-            sx={{ textTransform: "none" }}
-          >
-            Change Settings
-          </Button>
+          <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
+            <Button
+              onClick={() => {
+                if (window.confirm("Do you want to change the settings?")) {
+                  setConfig(null);
+                }
+              }}
+              size="small"
+              variant="text"
+              sx={{ textTransform: "none" }}
+            >
+              Change Settings
+            </Button>
+            <Button
+              onClick={handleLogout}
+              size="small"
+              variant="text"
+              color="error"
+              sx={{ textTransform: "none" }}
+            >
+              Logout
+            </Button>
+          </Stack>
         </Box>
       </Container>
     </Box>

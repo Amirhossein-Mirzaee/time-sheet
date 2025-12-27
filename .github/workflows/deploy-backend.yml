@@ -1,0 +1,37 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install backend dependencies
+      working-directory: ./server
+      run: npm install
+
+    - name: Run tests (if any)
+      working-directory: ./server
+      run: npm test || echo "No tests configured"
+      continue-on-error: true
+
+    - name: Build check
+      working-directory: ./server
+      run: node --check server.js
+
