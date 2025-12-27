@@ -2,16 +2,13 @@ import { getDaysInPersianMonth, getEnglishDayName, getCurrentPersianDate, getFin
 
 /**
  * Fetch month data for a Persian month
- * This uses local calculation but can be extended to use external APIs
+ * This uses local calculation
  * @param {number} year - Persian year
  * @param {number} month - Persian month (1-12)
  * @param {object} config - Configuration object with thursdayIsWeekend property
- * @returns {Promise<object>} Month data with days information
+ * @returns {object} Month data with days information
  */
-export const fetchMonthData = async (year, month, config = {}) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-
+export const fetchMonthData = (year, month, config = {}) => {
   const daysInMonth = getDaysInPersianMonth(year, month);
   const days = [];
   const thursdayIsWeekend = config.thursdayIsWeekend ?? true; // Default to true for backward compatibility
@@ -40,9 +37,9 @@ export const fetchMonthData = async (year, month, config = {}) => {
 
 /**
  * Get current month data
- * @returns {Promise<object>} Current month data
+ * @returns {object} Current month data
  */
-export const getCurrentMonthData = async () => {
+export const getCurrentMonthData = () => {
   const current = getCurrentPersianDate();
   return fetchMonthData(current.year, current.month);
 };

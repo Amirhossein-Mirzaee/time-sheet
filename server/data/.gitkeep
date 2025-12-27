@@ -1,3 +1,0 @@
-# This file ensures the data directory is tracked by git
-# Database files (.json) are gitignored but the directory structure is preserved
-

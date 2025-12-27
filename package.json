@@ -9,11 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
-    "deploy:vercel": "vercel --prod",
-    "deploy:frontend": "npm run build",
-    "server": "npm --prefix server start",
-    "server:dev": "npm --prefix server run dev",
-    "install:all": "npm install && npm --prefix server install"
+    "deploy:frontend": "npm run build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
