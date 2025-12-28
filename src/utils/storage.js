@@ -1,4 +1,4 @@
-const CONFIG_STORAGE_KEY = 'timesheet_config';
+export const CONFIG_STORAGE_KEY = 'timesheet_config';
 const DATA_STORAGE_PREFIX = 'timesheet_data_';
 
 /**

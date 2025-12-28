@@ -26,9 +26,15 @@ const Configuration = ({ onSave, initialConfig }) => {
   const [paidLeaveHours, setPaidLeaveHours] = useState(
     initialConfig?.paidLeaveHours || 20
   );
-  const [thursdayIsWeekend, setThursdayIsWeekend] = useState(
-    initialConfig?.thursdayIsWeekend ?? true
-  );
+  const [thursdayIsWeekend, setThursdayIsWeekend] = useState(() => {
+    // Preserve the exact value if provided, default to true only if undefined/null
+    const value = initialConfig?.thursdayIsWeekend;
+    if (value === undefined || value === null) {
+      return true;
+    }
+    // If it's already a boolean, use it directly; otherwise convert
+    return typeof value === 'boolean' ? value : Boolean(value);
+  });
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -58,7 +64,7 @@ const Configuration = ({ onSave, initialConfig }) => {
         monthlySalary: parseFloat(monthlySalary),
         requiredHours: parseFloat(requiredHours),
         paidLeaveHours: parseFloat(paidLeaveHours),
-        thursdayIsWeekend: thursdayIsWeekend,
+        thursdayIsWeekend: thursdayIsWeekend, // Already a boolean from state
       });
     } else {
       vibrateError();

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
   Container,
@@ -8,12 +8,14 @@ import {
   Button,
   Stack,
   Paper,
+  Fade,
 } from "@mui/material";
 import MonthSelector from "./components/MonthSelector";
 import DayEntry from "./components/DayEntry";
 import Summary from "./components/Summary";
 import PaidLeaveInput from "./components/PaidLeaveInput";
 import Configuration from "./components/Configuration";
+import StickySummary from "./components/StickySummary";
 import { calculateWorkHours } from "./utils/timeUtils";
 import {
   getCurrentPersianDate,
@@ -25,6 +27,7 @@ import {
   saveConfig,
   saveMonthData,
   loadMonthData,
+  CONFIG_STORAGE_KEY,
 } from "./utils/storage";
 import {
   DEFAULT_MONTHLY_SALARY,
@@ -43,14 +46,55 @@ const App = () => {
   const [timeEntries, setTimeEntries] = useState({});
   const [dayStatuses, setDayStatuses] = useState({});
   const [paidLeaveUsed, setPaidLeaveUsed] = useState(0);
+  const [showStickySummary, setShowStickySummary] = useState(false);
+  const summaryRef = useRef(null);
 
   // Load configuration on mount
   useEffect(() => {
     const savedConfig = loadConfig();
     if (savedConfig) {
+      // Ensure thursdayIsWeekend exists and is a boolean (for backward compatibility)
+      // Preserve the exact value if it exists, only set default if missing
+      if (savedConfig.thursdayIsWeekend === undefined || savedConfig.thursdayIsWeekend === null) {
+        savedConfig.thursdayIsWeekend = true;
+        saveConfig(savedConfig); // Update config with default value
+      } else {
+        // If it's a string, convert to boolean (handle edge cases)
+        if (typeof savedConfig.thursdayIsWeekend === 'string') {
+          savedConfig.thursdayIsWeekend = savedConfig.thursdayIsWeekend.toLowerCase() === 'true';
+          saveConfig(savedConfig); // Save normalized value
+        }
+        // If it's already a boolean (true or false), preserve it exactly as-is
+      }
+
       setConfig(savedConfig);
     }
     setLoading(false);
+
+    // Listen for storage changes (e.g., config updated in another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === CONFIG_STORAGE_KEY && e.newValue) {
+        try {
+          const updatedConfig = JSON.parse(e.newValue);
+          // Ensure thursdayIsWeekend exists and is a boolean
+          if (updatedConfig.thursdayIsWeekend === undefined || updatedConfig.thursdayIsWeekend === null) {
+            updatedConfig.thursdayIsWeekend = true;
+          } else if (typeof updatedConfig.thursdayIsWeekend === 'string') {
+            // If it's a string, convert to boolean (handle edge cases)
+            updatedConfig.thursdayIsWeekend = updatedConfig.thursdayIsWeekend.toLowerCase() === 'true';
+          }
+          // If it's already a boolean (true or false), preserve it exactly as-is
+          setConfig(updatedConfig);
+        } catch (error) {
+          console.error('Error parsing config from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Save paid leave when it changes
@@ -165,9 +209,15 @@ const App = () => {
   };
 
   const handleConfigSave = (newConfig) => {
-    setConfig(newConfig);
+    // Save the config exactly as received (thursdayIsWeekend is already a boolean from Configuration component)
+    // If for some reason it's missing, default to true
+    const configToSave = {
+      ...newConfig,
+      thursdayIsWeekend: newConfig.thursdayIsWeekend ?? true,
+    };
+    setConfig(configToSave);
     try {
-      saveConfig(newConfig);
+      saveConfig(configToSave);
     } catch (error) {
       console.error("Error saving config:", error);
     }
@@ -199,6 +249,29 @@ const App = () => {
     return total;
   }, [timeEntries, dayStatuses, monthData]);
 
+  // Handle scroll detection to show sticky summary after passing summary section
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!summaryRef.current) {
+        setShowStickySummary(false);
+        return;
+      }
+
+      const summaryRect = summaryRef.current.getBoundingClientRect();
+      // Show sticky summary when the bottom of the summary section has scrolled past the top of viewport
+      const shouldShow = summaryRect.bottom < 0;
+
+      setShowStickySummary(shouldShow);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Check initial position
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [monthData]); // Re-run when month data changes (summary might reposition)
+
   // Show loading while loading config
   if (loading) {
     return (
@@ -223,15 +296,19 @@ const App = () => {
 
   // Show configuration if not set
   if (!config) {
+    // Try to load existing config for "Change Settings" scenario
+    const existingConfig = loadConfig();
     return (
       <Configuration
         onSave={handleConfigSave}
-        initialConfig={{
-          monthlySalary: DEFAULT_MONTHLY_SALARY,
-          requiredHours: DEFAULT_REQUIRED_HOURS,
-          paidLeaveHours: DEFAULT_PAID_LEAVE_HOURS,
-          thursdayIsWeekend: true,
-        }}
+        initialConfig={
+          existingConfig || {
+            monthlySalary: DEFAULT_MONTHLY_SALARY,
+            requiredHours: DEFAULT_REQUIRED_HOURS,
+            paidLeaveHours: DEFAULT_PAID_LEAVE_HOURS,
+            thursdayIsWeekend: true,
+          }
+        }
       />
     );
   }
@@ -262,11 +339,37 @@ const App = () => {
       sx={{
         minHeight: { xs: "100dvh", sm: "100vh" },
         bgcolor: "background.default",
-        py: { xs: 2, sm: 3, md: 4 },
-        px: { xs: 1, sm: 2 },
       }}
     >
-      <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+      {/* Sticky Summary Header - Only show after scrolling past summary */}
+      {config && (
+        <Fade
+          in={showStickySummary}
+          timeout={{ enter: 150, exit: 100 }}
+        >
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1000,
+            }}
+          >
+            <StickySummary
+              totalHours={totalHours}
+              paidLeaveUsed={paidLeaveUsed}
+              config={config}
+            />
+          </Box>
+        </Fade>
+      )}
+
+      <Container
+        maxWidth="xl"
+        sx={{
+          px: { xs: 1, sm: 2 },
+          py: { xs: 2, sm: 3, md: 4 },
+        }}
+      >
         {/* Header */}
         <Box sx={{ mb: { xs: 3, sm: 4 }, textAlign: "center" }}>
           <Typography
@@ -339,6 +442,7 @@ const App = () => {
 
         {/* Summary */}
         <Box
+          ref={summaryRef}
           sx={{
             mb: 3,
             display: "flex",
