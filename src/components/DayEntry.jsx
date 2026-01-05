@@ -33,6 +33,14 @@ const dayjsToString = (dayjsObj) => {
   return dayjsObj.format("H:mm");
 };
 
+// Helper function to convert decimal hours to HH:MM format
+const formatHoursToTime = (decimalHours) => {
+  if (!decimalHours || decimalHours <= 0) return "0:00";
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  return `${hours}:${minutes.toString().padStart(2, "0")}`;
+};
+
 const DayEntry = ({
   day,
   dayName,
@@ -241,7 +249,7 @@ const DayEntry = ({
               )}
               {workHours > 0 && !isNotGoing && !isHoliday && (
                 <Chip
-                  label={`${workHours.toFixed(2)}h`}
+                  label={formatHoursToTime(workHours)}
                   size="small"
                   sx={{
                     height: 20,
